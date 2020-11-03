@@ -16,6 +16,7 @@ filelock==3.0.12
 flake8==3.8.3
 Flask==1.1.2
 Flask-Bcrypt==0.7.1
+Flask-Cors==3.0.9
 Flask-Dance==3.0.0
 Flask-JWT==0.3.2
 Flask-Login==0.5.0
@@ -23,7 +24,9 @@ flask-marshmallow==0.14.0
 Flask-Migrate==2.5.3
 Flask-RESTful==0.3.8
 Flask-SQLAlchemy==2.4.4
+Flask-Uploads==0.2.1
 Flask-WTF==0.14.3
+gunicorn==20.0.4
 idna==2.10
 isort==4.3.21
 itsdangerous==1.1.0
@@ -53,8 +56,6 @@ SQLAlchemy==1.3.17
 urllib3==1.25.9
 URLObject==2.4.3
 virtualenv==20.0.7
-Werkzeug==1.0.1
+Werkzeug==0.16.0
 wrapt==1.11.2
 WTForms==2.3.1
-uwsgi
-gunicorn
