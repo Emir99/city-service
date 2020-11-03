@@ -1,10 +1,24 @@
+import os
+import traceback
+
 from myproject import app, db
-from flask import jsonify, request
+from flask import jsonify, request, send_file
 from flask_cors import CORS, cross_origin
 from myproject.clientmodels import ClientModel, LanguageModel, ContactModel
 from myproject.clientschemas import ClientSchema, LanguageSchema, ContactSchema
 
+from flask_uploads import UploadNotAllowed, configure_uploads, patch_request_class
+from myproject import image_helper
+from myproject.imageschema import ImageSchema
+from myproject.image_helper import IMAGE_SET
+
+app.config['UPLOADED_IMAGES_DEST'] = os.path.join("static", "images")
+
 CORS(app)
+
+image_schema = ImageSchema()
+patch_request_class(app, 10 * 1024 * 1024)
+configure_uploads(app, IMAGE_SET)
 
 language_schema = LanguageSchema()
 languages_schema = LanguageSchema(many=True)
@@ -132,6 +146,48 @@ def add_num(uuid):
 
     db.session.commit()
     return jsonify({'message': 'Number is added'})
+
+@app.route('/client/<string:uuid>/image', methods=['POST'])
+@cross_origin()
+def add_image(uuid):
+    data = image_schema.load(request.files)
+    folder = f"user_{uuid}"
+    try:
+        image_path = image_helper.save_image(data["image"], folder=folder)
+        basename = image_helper.get_basename(image_path)
+        return {"message": "Image is uploaded."}, 201
+    except UploadNotAllowed:
+        extension = image_helper.get_extension(data["image"])
+        return {"message": "!!!"}, 400
+
+@app.route('/client/<string:uuid>/image/<string:image>', methods=['GET'])
+@cross_origin()
+def get_image(uuid, image: str):
+    folder = f"user_{uuid}"
+    if not image_helper.is_filename_safe(image):
+        return {"message": "Name is not safe!"}, 400
+    
+    try:
+        return send_file(image_helper.get_path(image, folder=folder))
+    except FileNotFoundError:
+        return {"message": "Image does not exist!"}, 404
+
+@app.route('/client/<string:uuid>/image/<string:image>', methods=['DELETE'])
+@cross_origin()
+def delete_image(uuid, image: str):
+    folder = f"user_{uuid}"
+
+    if not image_helper.is_filename_safe(image):
+        return {"message": "Name is not safe!"}, 400
+    
+    try:
+        os.remove(image_helper.get_path(image, folder=folder))
+        return {"message": "Image was deleted successfuly."}, 200
+    except FileNotFoundError:
+        return {"message": "Image does not exist!"}, 404
+    except:
+        traceback.print_exc()
+        return {"message": "Image failed to delete!"}, 500
 
 if __name__ == '__main__':
     app.run(debug=True)
