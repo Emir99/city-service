@@ -1,7 +1,10 @@
 from myproject import app, db
 from flask import jsonify, request
+from flask_cors import CORS, cross_origin
 from myproject.clientmodels import ClientModel, LanguageModel, ContactModel
 from myproject.clientschemas import ClientSchema, LanguageSchema, ContactSchema
+
+CORS(app)
 
 language_schema = LanguageSchema()
 languages_schema = LanguageSchema(many=True)
@@ -13,6 +16,7 @@ client_schema = ClientSchema()
 clients_schema = ClientSchema(many=True)
 
 @app.route('/client', methods=['POST'])
+@cross_origin()
 def add_client():
     uuid = request.json['uuid']
     forename = request.json['forename']
@@ -44,6 +48,7 @@ def add_client():
     return {'message': 'client created'}, 200
 
 @app.route('/client', methods=['GET'] )
+@cross_origin()
 def get_all_clients():
     all_clients = ClientModel.query.all()
     result = clients_schema.dump(all_clients)
@@ -51,12 +56,14 @@ def get_all_clients():
     return jsonify(result)  
 
 @app.route('/client/<string:uuid>', methods=['GET'])
+@cross_origin()
 def getclient_by_uuid(uuid):
     client = ClientModel.find_by_uuid(uuid)
     result = client_schema.dump(client)
     return jsonify(result)
 
 @app.route('/client/<string:uuid>', methods=['PUT'])
+@cross_origin()
 def client_update(uuid):
     client = ClientModel.find_by_uuid(uuid)
     
@@ -95,6 +102,7 @@ def client_update(uuid):
     return jsonify({'message': 'Client updated!'})
 
 @app.route('/client/<string:uuid>', methods=['DELETE'])
+@cross_origin()
 def delete_client(uuid):
     client = ClientModel.find_by_uuid(uuid)
     delete = ClientModel.delete_from_db(client)
@@ -102,6 +110,7 @@ def delete_client(uuid):
     return jsonify({'message': 'client deleted'})
 
 @app.route('/client/language/<string:uuid>', methods=['POST'])
+@cross_origin()
 def add_lang(uuid):
     lang = request.get_json()
     for i in range(len(lang)):
@@ -113,6 +122,7 @@ def add_lang(uuid):
     return jsonify({'message': 'Language is added'})
 
 @app.route('/client/number/<string:uuid>', methods=['POST'])
+@cross_origin()
 def add_num(uuid):
     num = request.get_json()
     for i in range(len(num)):
