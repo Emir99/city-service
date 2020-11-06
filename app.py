@@ -18,7 +18,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOADED_IMAGES_DEST'] = os.path.join("static", "images")
 app.config['CORS_ENABLED'] = True
 
-cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+cors = CORS(app, resources={r"/client/*": {"origins": "*"}})
 
 migrate = Migrate(app, db)
 patch_request_class(app, 10 * 1024 * 1024)  # restrict max upload image size to 10MB
