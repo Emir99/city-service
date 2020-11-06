@@ -1,4 +1,5 @@
-from myproject import db
+from db import db
+
 
 class ClientModel(db.Model):
 
@@ -8,22 +9,22 @@ class ClientModel(db.Model):
     forename = db.Column(db.String(30), index=True)
     surname = db.Column(db.String(30), index=True)
     email = db.Column(db.String(64), unique=True, index=True)
-    homeAddress = db.Column(db.String, index=True)
+    home_address = db.Column(db.String, index=True)
     city = db.Column(db.String(50), index=True)
-    postCode = db.Column(db.String, index=True)
+    post_code = db.Column(db.String, index=True)
 
-    languages = db.relationship('LanguageModel', backref='client', lazy='joined')
-    contact_numbers = db.relationship('ContactModel', backref='client', lazy='joined')
+    languages = db.relationship('ClientLanguageModel', backref='client', lazy='joined')
+    contact_numbers = db.relationship('ClientContactModel', backref='client', lazy='joined')
 
-    def __init__(self, uuid, forename, surname, email, homeAddress, city, postCode):
+    def __init__(self, uuid, forename, surname, email, home_address, city, post_code):
         self.uuid = uuid
         self.forename = forename
         self.surname = surname
         self.email = email
-        self.homeAddress = homeAddress
+        self.home_address = home_address
         self.city = city
-        self.postCode = postCode
-        
+        self.post_code = post_code
+
     @classmethod
     def find_by_uuid(cls, uuid):
         return cls.query.filter_by(uuid=uuid).first()
@@ -36,9 +37,10 @@ class ClientModel(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-class LanguageModel(db.Model):
 
-    __tablename__ = 'languages'
+class ClientLanguageModel(db.Model):
+
+    __tablename__ = 'client_languages'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
@@ -49,12 +51,13 @@ class LanguageModel(db.Model):
         self.client_id = client_id
 
     @classmethod
-    def findlang_by_client_id(cls, client_id):
-        return cls.query.filter(cls.client_id==client_id).all()
+    def find_lang_by_client_id(cls, client_id):
+        return cls.query.filter(cls.client_id == client_id).all()
 
-class ContactModel(db.Model):
 
-    __tablename__ = 'contacts'
+class ClientContactModel(db.Model):
+
+    __tablename__ = 'client_contacts'
 
     id = db.Column(db.Integer, primary_key=True)
     number = db.Column(db.Integer)
@@ -65,5 +68,5 @@ class ContactModel(db.Model):
         self.client_id = client_id
 
     @classmethod
-    def findcont_by_client_id(cls, client_id):
-        return cls.query.filter(cls.client_id==client_id).all()
+    def find_num_by_client_id(cls, client_id):
+        return cls.query.filter(cls.client_id == client_id).all()

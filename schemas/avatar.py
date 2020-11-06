@@ -1,6 +1,7 @@
 from marshmallow import Schema, fields
 from werkzeug.datastructures import FileStorage
 
+
 class FileStorageField(fields.Field):
     default_error_messages = {
         "invalid": "Not a valid image."
@@ -15,5 +16,6 @@ class FileStorageField(fields.Field):
 
         return value
 
-class ImageSchema(Schema):
+
+class AvatarSchema(Schema):
     image = FileStorageField(required=True)
