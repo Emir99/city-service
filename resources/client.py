@@ -30,7 +30,7 @@ class Clients(Resource):
         all_clients = ClientModel.query.all()
         result = clients_schema.dump(all_clients)
 
-        return jsonify(result)
+        return jsonify(result), {'Access-Control-Allow-Origin': '*'}
 
     @classmethod
     @cross_origin()
@@ -62,7 +62,7 @@ class Clients(Resource):
 
         db.session.commit()
 
-        return {'message': 'client created'}, 200
+        return {'message': 'client created'}, {'Access-Control-Allow-Origin': '*'}
 
 
 class Client(Resource):
@@ -110,7 +110,7 @@ class Client(Resource):
             contact_number[i].number = cont
             db.session.commit()
 
-        return jsonify({'message': 'Client updated!'})
+        return jsonify({'message': 'Client updated!'}), {'Access-Control-Allow-Origin': '*'}
 
 
 class ClientLanguage(Resource):
@@ -124,7 +124,7 @@ class ClientLanguage(Resource):
             db.session.add(my_language)
 
         db.session.commit()
-        return jsonify({'message': 'Language is added'})
+        return jsonify({'message': 'Language is added'}), {'Access-Control-Allow-Origin': '*'}
 
 
 class ClientNumber(Resource):
@@ -138,7 +138,7 @@ class ClientNumber(Resource):
             db.session.add(my_number)
 
         db.session.commit()
-        return jsonify({'message': 'Number is added'})
+        return jsonify({'message': 'Number is added'}), {'Access-Control-Allow-Origin': '*'}
 
 
 class Avatar(Resource):
@@ -150,8 +150,8 @@ class Avatar(Resource):
         avatar = image_helper.find_image_any_format(filename, folder)
 
         if avatar:
-            return send_file(avatar)
-        return {"message": "Avatar not found!"}, 404
+            return send_file(avatar), {'Access-Control-Allow-Origin': '*'}
+        return {"message": "Avatar not found!"}, {'Access-Control-Allow-Origin': '*'}
 
     @classmethod
     @cross_origin()
@@ -164,7 +164,7 @@ class Avatar(Resource):
             try:
                 os.remove(avatar_path)
             except:
-                return {"message": "Deleting avatar failed!"}, 500
+                return {"message": "Deleting avatar failed!"}, {'Access-Control-Allow-Origin': '*'}
 
         try:
             ext = image_helper.get_extension(data["image"].filename)
@@ -173,7 +173,7 @@ class Avatar(Resource):
                 data["image"], folder=folder, name=avatar
             )
             basename = image_helper.get_basename(avatar_path)
-            return {"message": "Avatar uploaded."}
+            return {"message": "Avatar uploaded."}, {'Access-Control-Allow-Origin': '*'}
         except UploadNotAllowed:
             extension = image_helper.get_extension(data["image"])
-            return {"message": "This extension is not allowed!"}, 400
+            return {"message": "This extension is not allowed!"}, {'Access-Control-Allow-Origin': '*'}
