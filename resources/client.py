@@ -1,5 +1,6 @@
 import os
 from flask import send_file, request, jsonify
+from flask_cors import cross_origin
 from flask_restful import Resource
 from flask_uploads import UploadNotAllowed
 
@@ -22,7 +23,9 @@ clients_schema = ClientSchema(many=True)
 
 
 class Clients(Resource):
+
     @classmethod
+    @cross_origin()
     def get(cls):
         all_clients = ClientModel.query.all()
         result = clients_schema.dump(all_clients)
@@ -30,6 +33,7 @@ class Clients(Resource):
         return jsonify(result)
 
     @classmethod
+    @cross_origin()
     def post(cls):
         uuid = request.json['uuid']
         forename = request.json['forename']
@@ -63,12 +67,14 @@ class Clients(Resource):
 
 class Client(Resource):
     @classmethod
+    @cross_origin()
     def get(cls, uuid):
         client = ClientModel.find_by_uuid(uuid)
         result = client_schema.dump(client)
         return jsonify(result)
 
     @classmethod
+    @cross_origin()
     def put(cls, uuid):
         client = ClientModel.find_by_uuid(uuid)
 
@@ -109,6 +115,7 @@ class Client(Resource):
 
 class ClientLanguage(Resource):
     @classmethod
+    @cross_origin()
     def post(cls, uuid):
         lang = request.get_json()
         for i in range(len(lang)):
@@ -122,6 +129,7 @@ class ClientLanguage(Resource):
 
 class ClientNumber(Resource):
     @classmethod
+    @cross_origin()
     def post(cls, uuid):
         num = request.get_json()
         for i in range(len(num)):
@@ -135,6 +143,7 @@ class ClientNumber(Resource):
 
 class Avatar(Resource):
     @classmethod
+    @cross_origin()
     def get(cls, uuid):
         folder = "avatars"
         filename = f"user_{uuid}"
@@ -145,6 +154,7 @@ class Avatar(Resource):
         return {"message": "Avatar not found!"}, 404
 
     @classmethod
+    @cross_origin()
     def put(cls, uuid):
         data = avatar_schema.load(request.files)
         filename = f"user_{uuid}"
