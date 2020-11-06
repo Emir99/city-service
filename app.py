@@ -30,45 +30,6 @@ api.add_resource(Client, "/client/<string:uuid>")
 api.add_resource(ClientLanguage, "/client/language/<string:uuid>")
 api.add_resource(ClientNumber, "/client/number/<string:uuid>")
 
-
-@app.route("/client/avatar/<string:uuid>", methods=['PUT'])
-@cross_origin()
-def put_image(uuid):
-    data = avatar_schema.load(request.files)
-    filename = f"user_{uuid}"
-    folder = "avatars"
-    avatar_path = image_helper.find_image_any_format(filename, folder)
-    if avatar_path:
-        try:
-            os.remove(avatar_path)
-        except:
-            return {"message": "Deleting avatar failed!"}, 500
-
-    try:
-        ext = image_helper.get_extension(data["image"].filename)
-        avatar = filename + ext
-        avatar_path = image_helper.save_image(
-            data["image"], folder=folder, name=avatar
-        )
-        basename = image_helper.get_basename(avatar_path)
-        return {"message": "Avatar uploaded."}
-    except UploadNotAllowed:
-        extension = image_helper.get_extension(data["image"])
-        return {"message": "This extension is not allowed!"}, 400
-
-
-@app.route("/client/avatar/<string:uuid>", methods=['PUT'])
-@cross_origin()
-def get(uuid):
-    folder = "avatars"
-    filename = f"user_{uuid}"
-    avatar = image_helper.find_image_any_format(filename, folder)
-
-    if avatar:
-        return send_file(avatar)
-    return {"message": "Avatar not found!"}, 404
-
-
 db.init_app(app)
 
 if __name__ == "__main__":

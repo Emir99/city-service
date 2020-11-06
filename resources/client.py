@@ -155,7 +155,7 @@ class Avatar(Resource):
 
     @classmethod
     @cross_origin()
-    def put(cls, uuid):
+    def post(cls, uuid):
         data = avatar_schema.load(request.files)
         filename = f"user_{uuid}"
         folder = "avatars"

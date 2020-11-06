@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="94966dcf-47f5-4123-b630-7e72b13d2d23" name="Default Changelist" comment="" />
+    <list default="true" id="94966dcf-47f5-4123-b630-7e72b13d2d23" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/client.py" beforeDir="false" afterPath="$PROJECT_DIR$/resources/client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/images/avatars/user_2231ss.jpg" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -57,6 +61,17 @@
       <updated>1604674613177</updated>
     </task>
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="WindowStateProjectService">
     <state x="698" y="344" key="#Notifications" timestamp="1604682707154">
