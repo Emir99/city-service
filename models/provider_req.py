@@ -1,10 +1,11 @@
 from db import db
+from models.provider_category import connect_provider_category, connect_provider_subcategory
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
 
-class ClientModel(db.Model):
-    __tablename__ = 'clients'
+class ProviderModelReq(db.Model):
+    __tablename__ = 'provider_req'
 
     identifier = db.Column(db.String, primary_key=True, nullable=False, index=True)
     forename = db.Column(db.String(30), nullable=False)
@@ -18,17 +19,23 @@ class ClientModel(db.Model):
     email_confirmation = db.Column(db.Boolean, default=False, nullable=False)
     role = db.Column(db.String(10), nullable=False)
 
-    languages = db.relationship('ClientLanguageModel', cascade='all,delete',
-                                backref='clients', lazy='dynamic')
+    status = db.Column(db.Boolean, default=False, nullable=False)
 
-    contact_numbers = db.relationship('ClientContactModel', cascade='all,delete',
-                                      backref='clients', lazy='dynamic')
+    occupations = db.relationship('CategoryModel', secondary=connect_provider_category,
+                                  backref=db.backref('category', lazy='dynamic'))
+    subcategories = db.relationship('SubCategoryModel', secondary=connect_provider_subcategory,
+                                    backref=db.backref('subcategory', lazy='dynamic'))
 
-    images = db.relationship('ClientImageModel', cascade='all,delete',
-                             backref='clients', lazy='dynamic')
+    languages = db.relationship('ProviderLanguageModelReq', cascade='all,delete',
+                                backref='provider_req', lazy='dynamic')
+    contact_numbers = db.relationship('ProviderContactModelReq', cascade='all,delete',
+                                      backref='provider_req', lazy='dynamic')
+
+    images = db.relationship('ProviderImageModelReq', cascade='all,delete',
+                             backref='provider_req', lazy='dynamic')
 
     def __init__(self, identifier, forename, surname, email, home_address, city, post_code,
-                 dob, residency, email_confirmation, role):
+                 dob, residency, email_confirmation, role, status):
         self.identifier = identifier
         self.forename = forename
         self.surname = surname
@@ -40,6 +47,7 @@ class ClientModel(db.Model):
         self.residency = residency
         self.email_confirmation = email_confirmation
         self.role = role
+        self.status = status
 
     @classmethod
     def find_by_identifier(cls, identifier):
@@ -54,58 +62,58 @@ class ClientModel(db.Model):
         db.session.commit()
 
 
-class ClientLanguageModel(db.Model):
+class ProviderLanguageModelReq(db.Model):
 
-    __tablename__ = 'client_languages'
+    __tablename__ = 'provider_languages_req'
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False, index=True)
     name = db.Column(db.String)
-    client_id = db.Column(db.String, db.ForeignKey('clients.identifier'), nullable=False)
+    provider_id = db.Column(db.String, db.ForeignKey('provider_req.identifier'), nullable=False)
 
-    def __init__(self, name, client_id):
+    def __init__(self, name, provider_id):
         self.name = name
-        self.client_id = client_id
+        self.provider_id = provider_id
 
     @classmethod
-    def find_lang_by_client_id(cls, client_id):
-        return cls.query.filter(cls.client_id == client_id).all()
+    def find_lang_by_provider_id(cls, provider_id):
+        return cls.query.filter(cls.provider_id == provider_id).all()
 
 
-class ClientContactModel(db.Model):
+class ProviderContactModelReq(db.Model):
 
-    __tablename__ = 'client_contacts'
+    __tablename__ = 'provider_contacts_req'
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False, index=True)
     number = db.Column(db.Integer)
-    client_id = db.Column(db.String, db.ForeignKey('clients.identifier'), nullable=False)
+    provider_id = db.Column(db.String, db.ForeignKey('provider_req.identifier'), nullable=False)
 
-    def __init__(self, number, client_id):
+    def __init__(self, number, provider_id):
         self.number = number
-        self.client_id = client_id
+        self.provider_id = provider_id
 
     @classmethod
-    def find_cont_by_client_id(cls, client_id):
-        return cls.query.filter(cls.client_id == client_id).all()
+    def find_cont_by_provider_id(cls, provider_id):
+        return cls.query.filter(cls.provider_id == provider_id).all()
 
 
-class ClientImageModel(db.Model):
+class ProviderImageModelReq(db.Model):
 
-    __tablename__ = 'client_images'
+    __tablename__ = 'provider_images_req'
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False, index=True)
     path = db.Column(db.String, unique=True, nullable=False, index=True)
     extension = db.Column(db.String, nullable=False, index=True)
 
-    client_id = db.Column(db.String, db.ForeignKey('clients.identifier'), nullable=False)
+    provider_id = db.Column(db.String, db.ForeignKey('provider_req.identifier'), nullable=False)
 
-    def __init__(self, path, extension, client_id):
+    def __init__(self, path, extension, provider_id):
         self.path = path
         self.extension = extension
-        self.client_id = client_id
+        self.provider_id = provider_id
 
     @classmethod
-    def find_image_by_client_id(cls, client_id):
-        return cls.query.filter(cls.client_id == client_id).all()
+    def find_image_by_provider_id(cls, provider_id):
+        return cls.query.filter(cls.provider_id == provider_id).all()
 
     def delete_from_db(self):
         db.session.delete(self)

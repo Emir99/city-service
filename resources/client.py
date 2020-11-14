@@ -1,31 +1,29 @@
 import os
-from flask import send_file, request, jsonify
-from flask_cors import cross_origin
+import shutil
+
+from flask import request, jsonify
 from flask_restful import Resource
 from flask_uploads import UploadNotAllowed
 
-from libs import image_helper
 from db import db
-from models.client import ClientModel, ClientLanguageModel, ClientContactModel
-from schemas.client import ClientSchema, ClientLanguageSchema, ClientContactSchema
-from schemas.avatar import AvatarSchema
+from libs import image_helper
+from models.client import ClientModel, ClientContactModel, ClientImageModel, ClientLanguageModel
+from schemas.client import ClientSchema, ClientLanguageSchema, ClientContactSchema, ClientImageSchema
 
-avatar_schema = AvatarSchema()
+client_schema = ClientSchema(many=False)
+clients_schema = ClientSchema(many=True, only=('identifier', 'forename', 'surname'))
 
-language_schema = ClientContactSchema()
-languages_schema = ClientLanguageSchema(many=True)
+client_language_schema = ClientLanguageSchema()
+client_languages_schema = ClientLanguageSchema(many=True)
 
-contact_schema = ClientContactSchema()
-contacts_schema = ClientContactSchema(many=True)
+client_contact_schema = ClientContactSchema()
+client_contacts_schema = ClientContactSchema(many=True)
 
-client_schema = ClientSchema()
-clients_schema = ClientSchema(many=True)
+client_images_schema = ClientImageSchema(many=True)
 
 
-class Clients(Resource):
-
+class ClientsResource(Resource):
     @classmethod
-    @cross_origin()
     def get(cls):
         all_clients = ClientModel.query.all()
         result = clients_schema.dump(all_clients)
@@ -33,147 +31,202 @@ class Clients(Resource):
         return jsonify(result)
 
     @classmethod
-    @cross_origin()
     def post(cls):
-        uuid = request.json['uuid']
-        forename = request.json['forename']
-        surname = request.json['surname']
-        email = request.json['email']
-        home_address = request.json['home_address']
-        city = request.json['city']
-        post_code = request.json['post_code']
+        if request.mimetype == 'application/json':
 
-        my_client = ClientModel(uuid, forename, surname, email, home_address, city, post_code)
-        db.session.add(my_client)
+            identifier = request.json['identifier']
+            forename = request.json['forename']
+            surname = request.json['surname']
+            email = request.json['email']
+            home_address = request.json['home_address']
+            city = request.json['city']
+            post_code = request.json['post_code']
+            dob = request.json['dob']
+            residency = request.json['residency']
+            email_confirmation = request.json['email_confirmation']
+            role = request.json['role']
 
-        lang = request.json['languages']
-        for i in range(len(lang)):
-            name = request.json['languages'][i]['name']
-            client_id = request.json['languages'][i]['client_id']
-            my_language = ClientLanguageModel(name, client_id)
-            db.session.add(my_language)
+            my_client = ClientModel(identifier, forename, surname, email, home_address, city, post_code, dob,
+                                    residency, email_confirmation, role)
+            db.session.add(my_client)
 
-        cont = request.json['contact_numbers']
-        for i in range(len(cont)):
-            number = request.json['contact_numbers'][i]['number']
-            client_id = request.json['contact_numbers'][i]['client_id']
-            my_contact = ClientContactModel(number, client_id)
-            db.session.add(my_contact)
+            query = db.session.query(ClientModel)
+            client_id = str(query.filter_by(identifier=ClientModel.identifier)[-1]).split(" ")
 
-        db.session.commit()
+            lang = request.json['languages']
+            for i in range(len(lang)):
+                name = request.json['languages'][i]['name']
+                my_language = ClientLanguageModel(name, client_id[1][:-1])
+                db.session.add(my_language)
 
-        return {'message': 'client created'}, 200
+            cont = request.json['contact_numbers']
+            for i in range(len(cont)):
+                number = request.json['contact_numbers'][i]['number']
+                my_contact = ClientContactModel(number, client_id[1][:-1])
+                db.session.add(my_contact)
 
-
-class Client(Resource):
-    @classmethod
-    @cross_origin()
-    def get(cls, uuid):
-        client = ClientModel.find_by_uuid(uuid)
-        result = client_schema.dump(client)
-        return jsonify(result)
-
-    @classmethod
-    @cross_origin()
-    def put(cls, uuid):
-        client = ClientModel.find_by_uuid(uuid)
-
-        forename = request.json['forename']
-        surname = request.json['surname']
-        email = request.json['email']
-        home_address = request.json['home_address']
-        city = request.json['city']
-        post_code = request.json['post_code']
-
-        client.forename = forename
-        client.surname = surname
-        client.email = email
-        client.home_address = home_address
-        client.city = city
-        client.post_code = post_code
-
-        db.session.commit()
-
-        language = ClientLanguageModel.find_lang_by_client_id(uuid)
-        rang = request.json['languages']
-
-        for i in range(len(rang)):
-            lang = request.json['languages'][i]['name']
-            language[i].name = lang
             db.session.commit()
 
-        contact_number = ClientContactModel.find_num_by_client_id(uuid)
-        leng = request.json['contact_numbers']
+        if request.mimetype == 'multipart/form-data':
 
-        for i in range(len(leng)):
-            cont = request.json['contact_numbers'][i]['number']
-            contact_number[i].number = cont
-            db.session.commit()
-
-        return jsonify({'message': 'Client updated!'})
-
-
-class ClientLanguage(Resource):
-    @classmethod
-    @cross_origin()
-    def post(cls, uuid):
-        lang = request.get_json()
-        for i in range(len(lang)):
-            name = request.json[i]['name']
-            my_language = ClientLanguageModel(name, uuid)
-            db.session.add(my_language)
-
-        db.session.commit()
-        return jsonify({'message': 'Language is added'})
-
-
-class ClientNumber(Resource):
-    @classmethod
-    @cross_origin()
-    def post(cls, uuid):
-        num = request.get_json()
-        for i in range(len(num)):
-            number = request.json[i]['number']
-            my_number = ClientContactModel(number, uuid)
-            db.session.add(my_number)
-
-        db.session.commit()
-        return jsonify({'message': 'Number is added'})
-
-
-class Avatar(Resource):
-    @classmethod
-    @cross_origin()
-    def get(cls, uuid):
-        folder = "avatars"
-        filename = f"user_{uuid}"
-        avatar = image_helper.find_image_any_format(filename, folder)
-
-        if avatar:
-            return send_file(avatar)
-        return {"message": "Avatar not found!"}, 404
-
-    @classmethod
-    @cross_origin()
-    def post(cls, uuid):
-        data = avatar_schema.load(request.files)
-        filename = f"user_{uuid}"
-        folder = "avatars"
-        avatar_path = image_helper.find_image_any_format(filename, folder)
-        if avatar_path:
+            data = {'images': None}
             try:
-                os.remove(avatar_path)
-            except:
-                return {"message": "Deleting avatar failed!"}, 500
+                query = db.session.query(ClientModel)
+                cli_id = query.filter_by(identifier=ClientModel.identifier)[-1]
+                identifier = client_schema.dump(cli_id)
 
-        try:
-            ext = image_helper.get_extension(data["image"].filename)
-            avatar = filename + ext
-            avatar_path = image_helper.save_image(
-                data["image"], folder=folder, name=avatar
-            )
-            basename = image_helper.get_basename(avatar_path)
-            return {"message": "Avatar uploaded."}
-        except UploadNotAllowed:
-            extension = image_helper.get_extension(data["image"])
-            return {"message": "This extension is not allowed!"}, 400
+                back_folder = "clients"
+                client_id = f"{identifier['identifier']}".lower()
+                folder = os.path.join(back_folder, client_id)
+                for images in request.files.getlist('images'):
+                    data['images'] = images
+                    try:
+                        save = image_helper.save_image(images, folder=folder)
+                        # DATABASE
+                        path = str(image_helper.get_path(save)).replace('\\', '/')
+                        extension = image_helper.get_extension(save)
+                        client_str = str(query.filter_by(identifier=ClientModel.identifier)[-1]).split(" ")
+                        client_images = ClientImageModel(path, extension, client_str[1][:-1])
+                        client_images.save_to_db()
+                    except UploadNotAllowed:
+                        extension = image_helper.get_extension(data["images"])
+                        return {"message": f"Extension {extension} not allowed!"}
+            except IndexError:
+                return {"message": "You need to create client first!"}
+
+        return {'message': 'Client created successfully!'}, 200
+
+
+class ClientResource(Resource):
+    @classmethod
+    def get(cls, identifier):
+        client = ClientModel.find_by_identifier(identifier)
+        if client:
+            result = client_schema.dump(client)
+            return jsonify(result)
+        else:
+            return {"message": f"Client with id {identifier} does not exist!"}
+
+    @classmethod
+    def put(cls, identifier):
+        client = ClientModel.find_by_identifier(identifier)
+        if client:
+            if request.mimetype == 'application/json':
+                client = ClientModel.find_by_identifier(identifier)
+
+                forename = request.json['forename']
+                surname = request.json['surname']
+                email = request.json['email']
+                home_address = request.json['home_address']
+                city = request.json['city']
+                post_code = request.json['post_code']
+                dob = request.json['dob']
+                residency = request.json['residency']
+                email_confirmation = request.json['email_confirmation']
+                role = request.json['role']
+
+                client.forename = forename
+                client.surname = surname
+                client.email = email
+                client.home_address = home_address
+                client.city = city
+                client.post_code = post_code
+                client.dob = dob
+                client.residency = residency
+                client.email_confirmation = email_confirmation
+                client.role = role
+
+                db.session.commit()
+
+                language = ClientLanguageModel.find_lang_by_client_id(identifier)
+                if not language:
+                    lang = request.json['languages']
+                    for i in range(len(lang)):
+                        name = request.json['languages'][i]['name']
+                        my_language = ClientLanguageModel(name, identifier)
+                        db.session.add(my_language)
+                else:
+                    for i in range(len(language)):
+                        db.session.delete(language[i])
+                        db.session.commit()
+                    rang = request.json['languages']
+                    for i in range(len(rang)):
+                        name = request.json['languages'][i]['name']
+                        my_language = ClientLanguageModel(name, identifier)
+                        db.session.add(my_language)
+
+                contact_number = ClientContactModel.find_cont_by_client_id(identifier)
+                if not contact_number:
+                    cont = request.json['contact_numbers']
+                    for i in range(len(cont)):
+                        number = request.json['contact_numbers'][i]['number']
+                        my_contact = ClientContactModel(number, identifier)
+                        db.session.add(my_contact)
+                else:
+                    for i in range(len(contact_number)):
+                        db.session.delete(contact_number[i])
+                        db.session.commit()
+                    cont = request.json['contact_numbers']
+                    for i in range(len(cont)):
+                        number = request.json['contact_numbers'][i]['number']
+                        my_contact = ClientContactModel(number, identifier)
+                        db.session.add(my_contact)
+
+                db.session.commit()
+
+            if request.mimetype == 'multipart/form-data':
+                data = {'images': None}
+
+                back_folder = "clients"
+                client_id = f"{identifier}".lower()
+                folder = os.path.join(back_folder, client_id)
+                folder_path = os.path.join("static", "images", folder)
+                is_folder = os.path.isdir(folder_path)
+                if is_folder:
+                    try:
+                        shutil.rmtree(folder_path)
+                    except OSError as e:
+                        return jsonify("Error: %s : %s" % (folder_path, e.strerror))
+
+                image_query = ClientImageModel.find_image_by_client_id(identifier)
+                for i in range(len(image_query)):
+                    db.session.delete(image_query[i])
+                    db.session.commit()
+
+                for images in request.files.getlist('images'):
+                    data['images'] = images
+                    try:
+                        save = image_helper.save_image(images, folder=folder, name=images.filename)
+                        # DATABASE
+                        path = str(image_helper.get_path(save)).replace('\\', '/')
+                        extension = image_helper.get_extension(save)
+                        client_image = ClientImageModel(path, extension, identifier)
+                        client_image.save_to_db()
+
+                    except UploadNotAllowed:
+                        extension = image_helper.get_extension(data['images'])
+                        return {"message": f"The file with {extension} is not allowed"}
+
+            return {"message": f"Client updated successfully."}
+        else:
+            return {"message": f"Client with id {identifier} does not exist!"}
+
+    @classmethod
+    def delete(cls, identifier):
+        client = ClientModel.find_by_identifier(identifier)
+        if client:
+            client.delete_from_db()
+            back_folder = "clients"
+            client_id = f"{identifier}".lower()
+            folder = os.path.join(back_folder, client_id)
+            folder_path = os.path.join("static", "images", folder)
+            is_folder = os.path.isdir(folder_path)
+            if is_folder:
+                try:
+                    shutil.rmtree(folder_path)
+                except OSError as e:
+                    return jsonify("Error: %s : %s" % (folder_path, e.strerror))
+
+            return {'message': 'Client was deleted successfully!'}
+        else:
+            return {"message": f"Client {identifier} does not exist!"}

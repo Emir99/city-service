@@ -1,34 +1,43 @@
-import os
-from flask import Flask, request, send_file
-from flask_uploads import configure_uploads, patch_request_class, UploadNotAllowed
+from dotenv import load_dotenv
+from flask import Flask
+from flask_uploads import configure_uploads, patch_request_class
 from flask_restful import Api
 from flask_migrate import Migrate
-from flask_cors import CORS, cross_origin
 
-from libs import image_helper
-from resources.client import Client, Clients, ClientLanguage, ClientNumber, Avatar, avatar_schema
+from resources.client import ClientResource, ClientsResource
+from resources.category import Category, Categories
+from resources.subcategory import SubcategoriesCategory, Subcategories, Subcategory
+from resources.provider_req import ProviderReq, ProvidersReq
+from resources.provider import ProvidersResource, ProviderResource
 from libs.image_helper import IMAGE_SET
 from db import db
 
 app = Flask(__name__)
 api = Api(app)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql+psycopg2://postgres:emir1999@localhost/cityservice')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOADED_IMAGES_DEST'] = os.path.join("static", "images")
-app.config['CORS_ENABLED'] = True
-
-cors = CORS(app, resources={r"/client/*": {"origins": "*"}})
+load_dotenv(".env", verbose=True)
+app.config.from_object("default_config")
+app.config.from_envvar("APPLICATION_SETTINGS")
 
 migrate = Migrate(app, db)
 patch_request_class(app, 10 * 1024 * 1024)  # restrict max upload image size to 10MB
 configure_uploads(app, IMAGE_SET)
 
-api.add_resource(Avatar, "/client/avatar/<string:uuid>")
-api.add_resource(Clients, "/client")
-api.add_resource(Client, "/client/<string:uuid>")
-api.add_resource(ClientLanguage, "/client/language/<string:uuid>")
-api.add_resource(ClientNumber, "/client/number/<string:uuid>")
+api.add_resource(ClientsResource, "/client")
+api.add_resource(ClientResource, "/client/<string:identifier>")
+
+api.add_resource(Categories, "/category")
+api.add_resource(Category, "/category/<string:name>")
+
+api.add_resource(SubcategoriesCategory, "/category/<string:category_name>/subcategory")
+api.add_resource(Subcategories, "/category/subcategory")
+api.add_resource(Subcategory, "/category/subcategory/<string:sub_name>")
+
+api.add_resource(ProvidersReq, "/provider_req")
+api.add_resource(ProviderReq, "/provider_req/<string:identifier>")
+
+api.add_resource(ProvidersResource, "/provider")
+api.add_resource(ProviderResource, "/provider/<string:identifier>")
 
 db.init_app(app)
 
