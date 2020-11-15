@@ -2,7 +2,6 @@ import os
 import shutil
 
 from flask import request, jsonify
-from flask_cors import cross_origin
 from flask_restful import Resource
 from flask_uploads import UploadNotAllowed
 
@@ -24,7 +23,6 @@ categories_schema = CategorySchema(many=True, only=('name', 'description', 'icon
 
 class SubcategoriesCategory(Resource):
     @classmethod
-    @cross_origin
     def get(cls, category_name):
         category_id = str(CategoryModel.find_by_name(category_name)).split(" ")
 
@@ -36,7 +34,6 @@ class SubcategoriesCategory(Resource):
             return jsonify(result)
 
     @classmethod
-    @cross_origin
     def post(cls, category_name):
         category_id = str(CategoryModel.find_by_name(category_name)).split(" ")
 
@@ -85,7 +82,6 @@ class SubcategoriesCategory(Resource):
 
 class Subcategories(Resource):
     @classmethod
-    @cross_origin
     def get(cls):
         all_categories = SubCategoryModel.query.all()
         result = sub_categories_schema.dump(all_categories)
@@ -95,7 +91,6 @@ class Subcategories(Resource):
 
 class Subcategory(Resource):
     @classmethod
-    @cross_origin
     def get(cls, sub_name):
         subcategory = SubCategoryModel.find_sub_by_name(sub_name)
 
@@ -108,7 +103,6 @@ class Subcategory(Resource):
             return {"message": f"Subcategory with name {sub_name} does not exist!"}
 
     @classmethod
-    @cross_origin
     def put(cls, sub_name):
         subcategory = SubCategoryModel.find_sub_by_name(sub_name)
 
@@ -170,7 +164,6 @@ class Subcategory(Resource):
             return {"message": f"Subcategory with name {sub_name} does not exist!"}
 
     @classmethod
-    @cross_origin
     def delete(cls, sub_name):
         subcategory = SubCategoryModel.find_sub_by_name(sub_name)
         if subcategory:

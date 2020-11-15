@@ -2,7 +2,6 @@ import os
 import shutil
 
 from flask import request, jsonify
-from flask_cors import cross_origin
 from flask_restful import Resource
 from flask_uploads import UploadNotAllowed
 
@@ -27,7 +26,6 @@ provider_images_schema = ProviderImageSchema(many=True)
 
 class ProvidersResource(Resource):
     @classmethod
-    @cross_origin
     def get(cls):
         all_providers = ProviderModel.query.all()
         result = providers_schema.dump(all_providers)
@@ -37,7 +35,6 @@ class ProvidersResource(Resource):
 
 class ProviderResource(Resource):
     @classmethod
-    @cross_origin
     def get(cls, identifier):
         provider = ProviderModel.find_by_identifier(identifier)
         if provider:
@@ -47,7 +44,6 @@ class ProviderResource(Resource):
             return {"message": f"Provider with id {identifier} does not exist!"}
 
     @classmethod
-    @cross_origin
     def put(cls, identifier):
         provider = ProviderModel.find_by_identifier(identifier)
         if provider:
@@ -189,7 +185,6 @@ class ProviderResource(Resource):
             return {"message": f"Provider with id {identifier} does not exist!"}
 
     @classmethod
-    @cross_origin
     def delete(cls, identifier):
         provider = ProviderModel.find_by_identifier(identifier)
         if provider:
