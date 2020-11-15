@@ -2,6 +2,7 @@ import os
 import shutil
 
 from flask import request, jsonify
+from flask_cors import cross_origin
 from flask_restful import Resource
 from flask_uploads import UploadNotAllowed
 
@@ -24,6 +25,7 @@ client_images_schema = ClientImageSchema(many=True)
 
 class ClientsResource(Resource):
     @classmethod
+    @cross_origin
     def get(cls):
         all_clients = ClientModel.query.all()
         result = clients_schema.dump(all_clients)
@@ -31,6 +33,7 @@ class ClientsResource(Resource):
         return jsonify(result)
 
     @classmethod
+    @cross_origin
     def post(cls):
         if request.mimetype == 'application/json':
 
@@ -99,6 +102,7 @@ class ClientsResource(Resource):
 
 class ClientResource(Resource):
     @classmethod
+    @cross_origin
     def get(cls, identifier):
         client = ClientModel.find_by_identifier(identifier)
         if client:
@@ -108,6 +112,7 @@ class ClientResource(Resource):
             return {"message": f"Client with id {identifier} does not exist!"}
 
     @classmethod
+    @cross_origin
     def put(cls, identifier):
         client = ClientModel.find_by_identifier(identifier)
         if client:
@@ -212,6 +217,7 @@ class ClientResource(Resource):
             return {"message": f"Client with id {identifier} does not exist!"}
 
     @classmethod
+    @cross_origin
     def delete(cls, identifier):
         client = ClientModel.find_by_identifier(identifier)
         if client:

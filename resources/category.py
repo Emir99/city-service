@@ -2,6 +2,7 @@ import os
 import shutil
 
 from flask import request, jsonify
+from flask_cors import cross_origin
 from flask_restful import Resource
 from flask_uploads import UploadNotAllowed
 
@@ -23,6 +24,7 @@ categories_schema = CategorySchema(many=True, only=('name', 'description', 'icon
 
 class Categories(Resource):
     @classmethod
+    @cross_origin
     def get(cls):
         all_categories = CategoryModel.query.all()
         result = categories_schema.dump(all_categories)
@@ -30,6 +32,7 @@ class Categories(Resource):
         return jsonify(result)
 
     @classmethod
+    @cross_origin
     def post(cls):
         if request.mimetype == 'application/json':
             category = request.get_json()
@@ -81,6 +84,7 @@ class Categories(Resource):
 
 class Category(Resource):
     @classmethod
+    @cross_origin
     def get(cls, name):
         category = CategoryModel.find_by_name(name)
         if category:
@@ -92,6 +96,7 @@ class Category(Resource):
             return {"message": f"Category with name {name} does not exist!"}
 
     @classmethod
+    @cross_origin
     def put(cls, name):
         category = CategoryModel.find_by_name(name)
         if category:
@@ -180,6 +185,7 @@ class Category(Resource):
             return {"message": f"Category with name {name} does not exist!"}
 
     @classmethod
+    @cross_origin
     def delete(cls, name):
         category = CategoryModel.find_by_name(name)
         if category:
